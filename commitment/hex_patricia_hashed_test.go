@@ -132,6 +132,7 @@ func (ms MockState) storageFn(plainKey []byte, cell *Cell) error {
 		copy(cell.Storage[:], ex.CodeHashOrStorage[:])
 	} else {
 		cell.Storage = [length.Hash]byte{}
+		cell.StorageLen = 0
 	}
 	return nil
 }
