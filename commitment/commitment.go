@@ -6,8 +6,6 @@ import (
 
 // Trie represents commitment variant.
 type Trie interface {
-	ProcessUpdates(plainKeys, hashedKeys [][]byte, updates []Update) (branchNodeUpdates map[string][]byte, err error)
-
 	// RootHash produces root hash of the trie
 	RootHash() (hash []byte, err error)
 
@@ -17,7 +15,7 @@ type Trie interface {
 	// Reset Drops everything from the trie
 	Reset()
 
-	ReviewKeys(pk, hk [][]byte) (rootHash []byte, branchNodeUpdates map[string][]byte, err error)
+	ReviewKeys(pk, hk [][]byte) (rootHash []byte, branchNodeUpdates map[string]BranchData, err error)
 
 	ResetFns(
 		branchFn func(prefix []byte) ([]byte, error),

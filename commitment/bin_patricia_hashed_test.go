@@ -69,21 +69,15 @@ func Test_BinPatriciaTrie_EmptyState(t *testing.T) {
 	if err := ms.applyPlainUpdates(plainKeys, updates); err != nil {
 		t.Fatal(err)
 	}
-	branchNodeUpdates, err := hph.ProcessUpdates(plainKeys, hashedKeys, updates)
+
+	_, branchNodeUpdates, err := hph.ReviewKeys(plainKeys, hashedKeys)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ms.applyBranchNodeUpdates(branchNodeUpdates)
 	fmt.Printf("1. Generated updates\n")
-	var keys []string
-	for key := range branchNodeUpdates {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, key := range keys {
-		branchNodeUpdate := branchNodeUpdates[key]
-		fmt.Printf("%x => %s\n", CompactToHex([]byte(key)), branchToString(branchNodeUpdate))
-	}
+	renderUpdates(branchNodeUpdates)
+
 	// More updates
 	hph.Reset()
 	hph.SetTrace(false)
@@ -93,21 +87,15 @@ func Test_BinPatriciaTrie_EmptyState(t *testing.T) {
 	if err := ms.applyPlainUpdates(plainKeys, updates); err != nil {
 		t.Fatal(err)
 	}
-	branchNodeUpdates, err = hph.ProcessUpdates(plainKeys, hashedKeys, updates)
+
+	_, branchNodeUpdates, err = hph.ReviewKeys(plainKeys, hashedKeys)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ms.applyBranchNodeUpdates(branchNodeUpdates)
 	fmt.Printf("2. Generated updates\n")
-	keys = keys[:0]
-	for key := range branchNodeUpdates {
-		keys = append(keys, key)
-	}
-	slices.Sort(keys)
-	for _, key := range keys {
-		branchNodeUpdate := branchNodeUpdates[key]
-		fmt.Printf("%x => %s\n", CompactToHex([]byte(key)), branchToString(branchNodeUpdate))
-	}
+	renderUpdates(branchNodeUpdates)
+
 	// More updates
 	hph.Reset()
 	hph.SetTrace(false)
@@ -117,23 +105,26 @@ func Test_BinPatriciaTrie_EmptyState(t *testing.T) {
 	if err := ms.applyPlainUpdates(plainKeys, updates); err != nil {
 		t.Fatal(err)
 	}
-	branchNodeUpdates, err = hph.ProcessUpdates(plainKeys, hashedKeys, updates)
+	_, branchNodeUpdates, err = hph.ReviewKeys(plainKeys, hashedKeys)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ms.applyBranchNodeUpdates(branchNodeUpdates)
 	fmt.Printf("3. Generated updates\n")
-	keys = keys[:0]
+	renderUpdates(branchNodeUpdates)
+}
+
+func renderUpdates(branchNodeUpdates map[string]BranchData) {
+	var keys []string
 	for key := range branchNodeUpdates {
 		keys = append(keys, key)
 	}
 	slices.Sort(keys)
 	for _, key := range keys {
 		branchNodeUpdate := branchNodeUpdates[key]
-		fmt.Printf("%x => %s\n", CompactToHex([]byte(key)), branchToString(branchNodeUpdate))
+		fmt.Printf("%x => %s\n", CompactToHex([]byte(key)), branchNodeUpdate.String())
 	}
 }
-
 func Test_BinPatriciaHashed_ProcessUpdates_UniqueRepresentation(t *testing.T) {
 	t.Skip()
 
@@ -157,18 +148,6 @@ func Test_BinPatriciaHashed_ProcessUpdates_UniqueRepresentation(t *testing.T) {
 		Storage("f5", "04", "9898").
 		Build()
 
-	renderUpdates := func(branchNodeUpdates map[string][]byte) {
-		var keys []string
-		for key := range branchNodeUpdates {
-			keys = append(keys, key)
-		}
-		slices.Sort(keys)
-		for _, key := range keys {
-			branchNodeUpdate := branchNodeUpdates[key]
-			fmt.Printf("%x => %s\n", CompactToHex([]byte(key)), branchToString(branchNodeUpdate))
-		}
-	}
-
 	trieOne := NewBinPatriciaHashed(1, ms.branchFn, ms.accountFn, ms.storageFn)
 	trieTwo := NewBinPatriciaHashed(1, ms2.branchFn, ms2.accountFn, ms2.storageFn)
 
@@ -180,16 +159,14 @@ func Test_BinPatriciaHashed_ProcessUpdates_UniqueRepresentation(t *testing.T) {
 
 	// single sequential update
 	roots := make([][]byte, 0)
-	branchNodeUpdatesOne := make(map[string][]byte)
+	branchNodeUpdatesOne := make(map[string]BranchData)
 	for i := 0; i < len(updates); i++ {
 		if err := ms.applyPlainUpdates(plainKeys[i:i+1], updates[i:i+1]); err != nil {
 			t.Fatal(err)
 		}
-		branchNodeUpdates, err := trieOne.ProcessUpdates(plainKeys[i:i+1], hashedKeys[i:i+1], updates[i:i+1])
+		sequentialRoot, branchNodeUpdates, err := trieOne.ReviewKeys(plainKeys[i:i+1], hashedKeys[i:i+1])
 		require.NoError(t, err)
 
-		sequentialRoot, err := trieOne.RootHash()
-		require.NoError(t, err)
 		roots = append(roots, sequentialRoot)
 
 		ms.applyBranchNodeUpdates(branchNodeUpdates)
@@ -205,10 +182,14 @@ func Test_BinPatriciaHashed_ProcessUpdates_UniqueRepresentation(t *testing.T) {
 
 	err := ms2.applyPlainUpdates(plainKeys, updates)
 	require.NoError(t, err)
+	for i, root := range roots {
+		fmt.Printf("%d [%s]\n", i, hex.EncodeToString(root))
+	}
+
 	fmt.Printf("\n\n")
 
 	// batch update
-	branchNodeUpdatesTwo, err := trieTwo.ProcessUpdates(plainKeys, hashedKeys, updates)
+	batchRoot, branchNodeUpdatesTwo, err := trieTwo.ReviewKeys(plainKeys, hashedKeys)
 	require.NoError(t, err)
 
 	ms2.applyBranchNodeUpdates(branchNodeUpdatesTwo)
@@ -219,13 +200,7 @@ func Test_BinPatriciaHashed_ProcessUpdates_UniqueRepresentation(t *testing.T) {
 	sequentialRoot, err := trieOne.RootHash()
 	require.NoError(t, err)
 
-	for i, root := range roots {
-		fmt.Printf("%d [%s]\n", i, hex.EncodeToString(root))
-	}
 	require.NotContainsf(t, roots[:len(roots)-1], sequentialRoot, "sequential root %s found in previous hashes", hex.EncodeToString(sequentialRoot))
-
-	batchRoot, err := trieTwo.RootHash()
-	require.NoError(t, err)
 
 	require.EqualValues(t, batchRoot, sequentialRoot,
 		"expected equal roots, got sequential [%v] != batch [%v]", hex.EncodeToString(sequentialRoot), hex.EncodeToString(batchRoot))

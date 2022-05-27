@@ -100,7 +100,7 @@ func NewBinPatriciaHashed(accountKeyLen int,
 	}
 }
 
-func (hph *BinHashed) ReviewKeys(pk, hk [][]byte) (rootHash []byte, branchNodeUpdates map[string][]byte, err error) {
+func (hph *BinHashed) ReviewKeys(pk, hk [][]byte) (rootHash []byte, branchNodeUpdates map[string]BranchData, err error) {
 	return nil, nil, nil
 }
 
