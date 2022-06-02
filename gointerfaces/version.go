@@ -19,7 +19,7 @@ package gointerfaces
 import (
 	"fmt"
 
-	"github.com/ledgerwatch/erigon-lib/gointerfaces/types"
+	"github.com/kw-jk/erigon-lib/gointerfaces/types"
 )
 
 type Version struct {

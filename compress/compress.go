@@ -29,8 +29,8 @@ import (
 	"sort"
 
 	"github.com/flanglet/kanzi-go/transform"
-	"github.com/ledgerwatch/erigon-lib/etl"
-	"github.com/ledgerwatch/erigon-lib/patricia"
+	"github.com/kw-jk/erigon-lib/etl"
+	"github.com/kw-jk/erigon-lib/patricia"
 )
 
 // Compressor is the main operating type for performing per-word compression

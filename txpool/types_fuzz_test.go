@@ -6,7 +6,7 @@ package txpool
 import (
 	"testing"
 
-	"github.com/ledgerwatch/erigon-lib/common/u256"
+	"github.com/kw-jk/erigon-lib/common/u256"
 )
 
 // https://blog.golang.org/fuzz-beta

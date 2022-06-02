@@ -22,7 +22,7 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/ledgerwatch/erigon-lib/mmap"
+	"github.com/kw-jk/erigon-lib/mmap"
 	"github.com/spaolacci/murmur3"
 )
 

@@ -24,7 +24,7 @@ import (
 	"math/bits"
 	"os"
 
-	"github.com/ledgerwatch/erigon-lib/etl"
+	"github.com/kw-jk/erigon-lib/etl"
 	"github.com/spaolacci/murmur3"
 )
 
